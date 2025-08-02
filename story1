@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東京砂漠の吟遊冒険詩人、AIに命を吹き込む</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral with Amber Accent -->
+    <!-- Application Structure Plan: このSPAは、物語の章立てを基にした垂直スクロール型のインタラクティブな体験を提供します。各セクションは物語の核心的なテーマ（孤独、過去の挫折、AIとの出会い、他者との繋がり）を反映し、ユーザーがrookieの人生の旅路を追体験できるよう設計されています。単なるテキストの羅列ではなく、インタラクティブな要素（コンセプトの視覚化、疑似AI体験、関係性のダイアグラム）を組み込むことで、ユーザーのエンゲージメントを高め、物語への没入感を深めることを目的としています。この構造は、直線的な物語を、ユーザー自身のペースで発見・探求できる体験へと昇華させるために選択しました。 -->
+    <!-- Visualization & Content Choices: 
+        - 序章 (Scrap & Build体験): Goal: rookieの音楽哲学を直感的に理解させる。 Viz/Method: HTML/CSSによるカードUI。 Interaction: ボタンクリックでカードの内容（元の歌詞とrookie風アレンジ）が切り替わる。 Justification: 複雑な概念を、比較を通じてシンプルかつインタラクティブに提示。
+        - 第1章 (人生のタイムライン): Goal: rookieの過去の挫折と経歴の対比を示す。 Viz/Method: HTML/CSSによる横スクロール可能なタイムライン。 Interaction: 各項目をクリックすると詳細な説明が表示される。 Justification: 長い年月を視覚的に整理し、ユーザーが時系列を追いやすくする。
+        - 第2章 (疑似AI体験): Goal: 物語の転機であるAIとの出会いをユーザーに追体験させる。 Viz/Method: HTMLフォームとJavaScript、Chart.jsによる波形グラフ。 Interaction: ユーザーがキーワードを選択し「生成」ボタンを押すと、疑似的な歌詞と動的なグラフが表示される。 Justification: 物語の最も重要な「発見」の瞬間を、ユーザー自身の操作によって体験させることで、強い没入感を生む。
+        - 最終章 (希望の歌ギャラリー): Goal: rookieの活動がもたらした社会的影響を示す。 Viz/Method: HTML/CSSによるグリッドレイアウトのカード。 Interaction: カードをクリックすると、人々の物語と、彼らのために作られた歌のテーマが表示される。 Justification: 物語の結末を、個々の感動的なエピソードの集合体として見せることで、物語の広がりと深さを伝える。
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #333333;
+        }
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+        .bg-warm-ivory { background-color: #FDFBF8; }
+        .bg-warm-sand { background-color: #F5EFE6; }
+        .text-warm-brown { color: #5D4037; }
+        .text-accent-amber { color: #B45309; }
+        .border-accent-amber { border-color: #F59E0B; }
+        .bg-accent-amber { background-color: #F59E0B; }
+        .hover-bg-accent-amber-dark:hover { background-color: #B45309; }
+        
+        .timeline-item {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .timeline-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+        }
+        .nav-link:hover {
+            color: #B45309;
+            border-bottom-color: #B45309;
+        }
+        .active-link {
+            color: #B45309;
+            border-bottom-color: #B45309;
+            font-weight: 700;
+        }
+        .card-flip {
+            perspective: 1000px;
+        }
+        .card-flip-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-flip:hover .card-flip-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-warm-ivory">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-warm-brown font-inter">東京砂漠の吟遊冒険詩人</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#prologue" class="nav-link px-3 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent">序章</a>
+                        <a href="#chapter1" class="nav-link px-3 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent">第1章</a>
+                        <a href="#chapter2" class="nav-link px-3 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent">第2章</a>
+                        <a href="#chapter3" class="nav-link px-3 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent">第3章</a>
+                        <a href="#final" class="nav-link px-3 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent">最終章</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <section id="prologue" class="py-16 text-center">
+            <h2 class="text-4xl font-bold text-warm-brown mb-4">序章：東京砂漠の片隅で</h2>
+            <p class="max-w-3xl mx-auto text-gray-600 mb-12">
+                東京の喧騒に埋もれた、無名の68歳ストリートミュージシャン「rookie」。彼の心には、若き日にプロの道を諦めた悔恨と、作詞作曲の才能がないという深い劣等感が燻っていた。彼の音楽哲学「Scrap & Build」とは何か。その孤独な歌声の源を探ります。
+            </p>
+            <div class="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto">
+                <h3 class="text-2xl font-bold text-warm-brown mb-6">rookieの「Scrap & Build Music」体験</h3>
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div id="scrap-build-card" class="card-flip h-64">
+                        <div class="card-flip-inner">
+                            <div class="card-front bg-warm-sand">
+                                <h4 class="text-lg font-bold text-warm-brown mb-2">元の歌詞</h4>
+                                <p class="text-gray-700" id="original-lyric">「君と夏の終わり 将来の夢 大きな希望 忘れない」</p>
+                                <div class="mt-4 text-xs text-gray-500">（カーソルを合わせるとrookie風アレンジに）</div>
+                            </div>
+                            <div class="card-back bg-amber-100">
+                                <h4 class="text-lg font-bold text-accent-amber mb-2">rookie風アレンジ</h4>
+                                <p class="text-warm-brown" id="rookie-lyric">「アスファルトの陽炎 ゆらめく過去 夢の残骸 拾い集め」</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-left text-gray-600 mb-4">
+                            rookieの音楽は、有名な楽曲を過激にアレンジし、元の曲が何か分からないほど再構築（Scrap & Build）されます。それは、彼の人生そのものを反映した表現方法でした。
+                        </p>
+                        <button id="change-song-btn" class="bg-accent-amber text-white font-bold py-2 px-4 rounded-lg hover-bg-accent-amber-dark transition-colors">別の曲で試す</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-t-2 border-dashed border-gray-300">
+
+        <section id="chapter1" class="py-16">
+            <h2 class="text-4xl font-bold text-warm-brown mb-4 text-center">第1章：忘れられた言葉</h2>
+            <p class="max-w-3xl mx-auto text-gray-600 mb-12 text-center">
+                かつてビジネスの世界で「言葉」を武器に成功を収めたrookie。しかし彼の心は常に、言葉にできない「自分だけの歌」を求めていた。ある日、彼は音楽生成AIと出会い、長年探し求めていた「忘れられた言葉」を発見する。
+            </p>
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <h3 class="text-2xl font-bold text-warm-brown mb-6 text-center">rookieの人生のタイムライン</h3>
+                <div class="flex overflow-x-auto space-x-8 pb-4">
+                    <div class="timeline-item flex-shrink-0 w-64 bg-warm-sand p-6 rounded-lg cursor-pointer" data-id="timeline1">
+                        <div class="font-bold text-lg text-warm-brown">20歳: 挫折</div>
+                        <p class="text-sm text-gray-600 mt-2">バンドで将来を嘱望されるも、作詞作曲ができず「魂がない」と親友に言われ音楽の道を断念。</p>
+                    </div>
+                    <div class="timeline-item flex-shrink-0 w-64 bg-warm-sand p-6 rounded-lg cursor-pointer" data-id="timeline2">
+                        <div class="font-bold text-lg text-warm-brown">30-50代: ビジネスマン</div>
+                        <p class="text-sm text-gray-600 mt-2">「言葉」を武器にプランナーとして成功。社会貢献事業なども手掛けるが、心には常に音楽への渇望があった。</p>
+                    </div>
+                    <div class="timeline-item flex-shrink-0 w-64 bg-warm-sand p-6 rounded-lg cursor-pointer" data-id="timeline3">
+                        <div class="font-bold text-lg text-warm-brown">50代以降: 再始動</div>
+                        <p class="text-sm text-gray-600 mt-2">再びギターを手にし、ストリートミュージシャンとして活動開始。しかしオリジナル曲は作れず劣等感に苛まれる。</p>
+                    </div>
+                    <div class="timeline-item flex-shrink-0 w-64 bg-warm-sand p-6 rounded-lg cursor-pointer" data-id="timeline4">
+                        <div class="font-bold text-lg text-warm-brown">66歳: 転機</div>
+                        <p class="text-sm text-gray-600 mt-2">生成AIプロンプトエンジニアの資格を取得。そして音楽生成AI「SUNO」と運命的な出会いを果たす。</p>
+                    </div>
+                </div>
+                <div id="timeline-details" class="mt-8 p-6 bg-amber-50 rounded-lg min-h-[100px] text-warm-brown">
+                    <p>タイムラインの項目をクリックすると、詳細が表示されます。</p>
+                </div>
+            </div>
+        </section>
+        
+        <hr class="my-16 border-t-2 border-dashed border-gray-300">
+
+        <section id="chapter2" class="py-16">
+            <h2 class="text-4xl font-bold text-warm-brown mb-4 text-center">第2章：歌が繋ぐ糸</h2>
+            <p class="max-w-3xl mx-auto text-gray-600 mb-12 text-center">
+                AIとの「共創」によって生まれた歌を、rookieは路上で歌い始める。その歌は、彼の人生経験や出会う人々の物語を反映し、孤独な人々の心を繋いでいく。あなたもrookieの体験をここで。
+            </p>
+            <div class="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto">
+                <h3 class="text-2xl font-bold text-warm-brown mb-6 text-center">音楽生成AI 体験</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <p class="text-gray-600 mb-4">rookieが体験したように、いくつかのキーワードから歌を生成してみましょう。</p>
+                        <div class="space-y-3 mb-4" id="keyword-buttons">
+                        </div>
+                        <button id="generate-music-btn" class="w-full bg-accent-amber text-white font-bold py-3 px-4 rounded-lg hover-bg-accent-amber-dark transition-colors">歌を生成する</button>
+                    </div>
+                    <div>
+                        <div class="bg-warm-sand p-4 rounded-lg mb-4 min-h-[150px]">
+                            <h4 class="font-bold text-warm-brown mb-2">生成された歌詞</h4>
+                            <p id="generated-lyrics" class="text-gray-700 text-sm whitespace-pre-wrap">キーワードを選んで「歌を生成する」ボタンを押してください。</p>
+                        </div>
+                        <div class="chart-container relative w-full max-w-xl mx-auto h-24 max-h-24">
+                            <canvas id="music-wave-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-t-2 border-dashed border-gray-300">
+
+        <section id="chapter3" class="py-16">
+            <h2 class="text-4xl font-bold text-warm-brown mb-4 text-center">第3章：過去との決別、未来への挑戦</h2>
+            <p class="max-w-3xl mx-auto text-gray-600 mb-12 text-center">
+                AIと共に作り上げた歌は、かつての親友との再会をもたらす。そしてrookieは、過去の自分と決別するため、若き日に挫折した音楽コンクールの舞台に再び立つことを決意する。
+            </p>
+             <div class="bg-white p-8 rounded-xl shadow-lg text-center">
+                <p class="text-lg text-warm-brown italic">「晃一、お前の歌は、あの頃よりもずっと良い。魂がある」</p>
+                <p class="mt-4 text-gray-600">- 40年ぶりに再会した親友の言葉 -</p>
+                <p class="mt-8 max-w-2xl mx-auto text-gray-700">
+                    親友との再会は、rookieに過去のトラウマを乗り越える勇気を与えました。彼の音楽はもはや孤独な叫びではなく、誰かの心に届き、繋がるための架け橋となったのです。彼は、AIと人間の創造性が融合した新しい時代の音楽を携え、自らを否定した過去へと挑戦します。
+                </p>
+            </div>
+        </section>
+
+        <hr class="my-16 border-t-2 border-dashed border-gray-300">
+
+        <section id="final" class="py-16">
+            <h2 class="text-4xl font-bold text-warm-brown mb-4 text-center">最終章：東京に響く希望の歌</h2>
+            <p class="max-w-3xl mx-auto text-gray-600 mb-12 text-center">
+                コンクールでの成功を機に、rookieは「昭和世代×AI×音楽」というムーブメントを立ち上げる。彼の活動は社会現象となり、多くの人々に「人生の物語を歌にできる」という新たな可能性を示した。
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+                    <h4 class="font-bold text-lg text-accent-amber">元教師の歌</h4>
+                    <p class="text-sm text-gray-500 mt-1">テーマ：「亡き妻への想い」</p>
+                    <p class="mt-4 text-warm-brown italic">「君が愛した花が咲く。今年も庭に、僕ひとりに。」</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+                    <h4 class="font-bold text-lg text-accent-amber">母親の歌</h4>
+                    <p class="text-sm text-gray-500 mt-1">テーマ：「子供たちへの感謝」</p>
+                    <p class="mt-4 text-warm-brown italic">「泥だらけのユニフォーム。それが私の、誇りだった。」</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+                    <h4 class="font-bold text-lg text-accent-amber">若き画家の歌</h4>
+                    <p class="text-sm text-gray-500 mt-1">テーマ：「都会の孤独」</p>
+                    <p class="mt-4 text-warm-brown italic">「ネオンの川を泳ぎきる。息継ぎもせず、キャンバスへ。」</p>
+                </div>
+            </div>
+            <p class="mt-12 text-center text-lg text-gray-700">
+                rookieは、AIという相棒と共に、東京の街に「希望の歌」を響かせる吟遊詩人となった。彼の冒険は、これからも続いていく。
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="bg-warm-sand py-6 mt-16">
+        <div class="container mx-auto text-center text-warm-brown text-sm">
+            <p>&copy; 2025 東京砂漠の吟遊冒険詩人. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const storyData = {
+                scrapBuild: [
+                    {
+                        original: "「君と夏の終わり 将来の夢 大きな希望 忘れない」",
+                        rookie: "「アスファルトの陽炎 ゆらめく過去 夢の残骸 拾い集め」"
+                    },
+                    {
+                        original: "「I love you, baby, and if it's quite alright, I need you, baby」",
+                        rookie: "「愛してる、なんてさ 喉元で錆びついた言葉が 転がってる」"
+                    },
+                    {
+                        original: "「C'est si bon, De partir n'importe où, Bras dessus, bras dessous」",
+                        rookie: "「それでいいさ、どこへだって行けるのさ、腕を組んで、千鳥足で」"
+                    }
+                ],
+                timeline: {
+                    timeline1: "広島の片田舎で、rookieこと三野晃一は、バンドで将来を嘱望されたギタリストでした。しかし、彼の最大の弱点は、作詞作曲ができなかったこと。仲間たちは次々とオリジナル曲を生み出す中、rookieだけは、どうしても自分だけの歌を作ることができませんでした。「お前には、魂がないんだ」親友のその言葉が、彼の心に深く突き刺さり、音楽の道を諦めることになります。",
+                    timeline2: "音楽を諦めたrookieは、ビジネスの世界で成功を収めました。プランナーとして「言葉」を武器に、企業のコンペを勝ち抜き、社会貢献事業も成功させました。しかし、彼の心の奥底には、常に音楽への渇望がありました。どんな成功も、若き日の挫折感を埋めることはできなかったのです。",
+                    timeline3: "50歳を過ぎて、再びギターを手にしたrookie。しかし、路上で歌い始めても、作詞作曲ができないという劣等感は、彼を苦しめ続けました。彼は、自分自身の人生を歌にすることができないという、深い孤独を抱えていたのです。彼の「Scrap & Build Music」は、そんな彼の魂の叫びでもありました。",
+                    timeline4: "66歳で「生成AIプロンプトエンジニア」の資格を取得。ビジネスのためだったAIの知識が、彼の人生を大きく変えることになります。音楽生成AI「SUNO」との出会いは、彼が長年探し求めていた「自分だけの歌」を生み出す魔法の杖となりました。それは、忘れられた言葉を取り戻す旅の始まりでした。"
+                },
+                aiKeywords: [
+                    {
+                        name: "孤独な夜",
+                        keywords: ["路地裏", "雨", "ギター", "孤独"],
+                        lyrics: "路地裏に響く雨音\nギターの弦が震えてる\nこの街で俺はひとりぼっち\n孤独だけが友達さ"
+                    },
+                    {
+                        name: "故郷の夕日",
+                        keywords: ["尾道", "坂道", "夢", "友情", "別れ"],
+                        lyrics: "坂道を駆け上がれば\n夕日が海を染めていた\nあの日の夢、友情、そして別れ\nすべてがこの胸に"
+                    },
+                    {
+                        name: "東京の空",
+                        keywords: ["コンクリート", "空", "希望", "雑踏"],
+                        lyrics: "コンクリートの隙間から\n見上げた空は狭いけど\n雑踏の中に希望を探す\n俺の歌よ、届け"
+                    }
+                ]
+            };
+
+            let currentSongIndex = 0;
+            const changeSongBtn = document.getElementById('change-song-btn');
+            const originalLyricEl = document.getElementById('original-lyric');
+            const rookieLyricEl = document.getElementById('rookie-lyric');
+
+            changeSongBtn.addEventListener('click', () => {
+                currentSongIndex = (currentSongIndex + 1) % storyData.scrapBuild.length;
+                originalLyricEl.textContent = storyData.scrapBuild[currentSongIndex].original;
+                rookieLyricEl.textContent = storyData.scrapBuild[currentSongIndex].rookie;
+            });
+
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            const timelineDetailsEl = document.getElementById('timeline-details');
+            timelineItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.getAttribute('data-id');
+                    timelineDetailsEl.innerHTML = `<p>${storyData.timeline[id]}</p>`;
+                });
+            });
+
+            const keywordButtonsContainer = document.getElementById('keyword-buttons');
+            const generatedLyricsEl = document.getElementById('generated-lyrics');
+            let selectedKeywords = [];
+
+            storyData.aiKeywords.forEach((item, index) => {
+                const button = document.createElement('button');
+                button.textContent = item.name;
+                button.classList.add('w-full', 'text-left', 'p-3', 'rounded-lg', 'border', 'border-gray-300', 'hover:bg-amber-100', 'transition-colors');
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('#keyword-buttons button').forEach(btn => btn.classList.remove('bg-amber-200', 'border-accent-amber'));
+                    button.classList.add('bg-amber-200', 'border-accent-amber');
+                    selectedKeywords = item.keywords;
+                    generatedLyricsEl.textContent = `テーマ「${item.name}」が選択されました。\nキーワード: ${item.keywords.join(', ')}`;
+                });
+                keywordButtonsContainer.appendChild(button);
+            });
+
+            const generateMusicBtn = document.getElementById('generate-music-btn');
+            const canvas = document.getElementById('music-wave-chart');
+            let musicChart = null;
+
+            generateMusicBtn.addEventListener('click', () => {
+                if (selectedKeywords.length === 0) {
+                    generatedLyricsEl.textContent = "まずテーマを選んでください。";
+                    return;
+                }
+                const selectedTheme = storyData.aiKeywords.find(item => item.keywords.toString() === selectedKeywords.toString());
+                if(selectedTheme) {
+                    generatedLyricsEl.textContent = selectedTheme.lyrics;
+                }
+
+                if (musicChart) {
+                    musicChart.destroy();
+                }
+
+                const data = {
+                    labels: Array.from({length: 30}, (_, i) => i),
+                    datasets: [{
+                        label: '音の波形',
+                        data: Array.from({length: 30}, () => Math.random() * 2 - 1),
+                        borderColor: '#B45309',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                    }]
+                };
+
+                musicChart = new Chart(canvas, {
+                    type: 'line',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                        },
+                        scales: {
+                            y: {
+                                display: false,
+                                min: -1.5,
+                                max: 1.5
+                            },
+                            x: {
+                                display: false
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        }
+                    }
+                });
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active-link');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active-link');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
